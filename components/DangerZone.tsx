@@ -1,22 +1,20 @@
 import { createSettingsStyles } from "@/assets/styles/settings.styles";
-import { api } from "@/convex/_generated/api";
 import useTheme from "@/hooks/useTheme";
+import { useTodos } from "@/todoStore";
 import { Ionicons } from "@expo/vector-icons";
-import { useMutation } from "convex/react";
 import { LinearGradient } from "expo-linear-gradient";
 import { Alert, Text, TouchableOpacity, View } from "react-native";
 
 const DangerZone = () => {
   const { colors } = useTheme();
+  const { clearAllTodos } = useTodos();
 
   const settingsStyles = createSettingsStyles(colors);
-
-  const clearAllTodos = useMutation(api.todo.clearAllTodos);
 
   const handleResetApp = async () => {
     Alert.alert(
       "Reset App",
-      "⚠️ This will delete ALL your todos permanently. This action cannot be undone.",
+      "This will delete ALL your todos permanently. This action cannot be undone.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -24,10 +22,10 @@ const DangerZone = () => {
           style: "destructive",
           onPress: async () => {
             try {
-              const result = await clearAllTodos();
+              const deletedCount = await clearAllTodos();
               Alert.alert(
                 "App Reset",
-                `Successfully deleted ${result.deletedCount} todo${result.deletedCount === 1 ? "" : "s"}. Your app has been reset.`
+                `Successfully deleted ${deletedCount} todo${deletedCount === 1 ? "" : "s"}. Your app has been reset.`
               );
             } catch (error) {
               console.log("Error deleting all todos", error);

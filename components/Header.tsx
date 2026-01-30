@@ -1,20 +1,18 @@
 import { createHomeStyles } from "@/assets/styles/home.styles";
-import { api } from "@/convex/_generated/api";
 import useTheme from "@/hooks/useTheme";
+import { useTodos } from "@/todoStore";
 import { Ionicons } from "@expo/vector-icons";
-import { useQuery } from "convex/react";
 import { LinearGradient } from "expo-linear-gradient";
 import { Text, View } from "react-native";
 
 const Header = () => {
   const { colors } = useTheme();
+  const { todos } = useTodos();
 
   const homeStyles = createHomeStyles(colors);
 
-  const todos = useQuery(api.todo.getTodos);
-
-  const completedCount = todos ? todos.filter((todo) => todo.isCompleted).length : 0;
-  const totalCount = todos ? todos.length : 0;
+  const completedCount = todos.filter((todo) => todo.isCompleted).length;
+  const totalCount = todos.length;
   const progressPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
   return (
@@ -25,7 +23,7 @@ const Header = () => {
         </LinearGradient>
 
         <View style={homeStyles.titleTextContainer}>
-          <Text style={homeStyles.title}>Today&apos;s Tasks 👀</Text>
+          <Text style={homeStyles.title}>Today&apos;s Tasks</Text>
           <Text style={homeStyles.subtitle}>
             {completedCount} of {totalCount} completed
           </Text>

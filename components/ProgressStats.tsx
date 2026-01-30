@@ -1,18 +1,16 @@
 import { createSettingsStyles } from "@/assets/styles/settings.styles";
-import { api } from "@/convex/_generated/api";
 import useTheme from "@/hooks/useTheme";
+import { useTodos } from "@/todoStore";
 import { Ionicons } from "@expo/vector-icons";
-import { useQuery } from "convex/react";
 import { LinearGradient } from "expo-linear-gradient";
 import { Text, View } from "react-native";
 
 const ProgressStats = () => {
   const { colors } = useTheme();
+  const { todos } = useTodos();
   const settingsStyles = createSettingsStyles(colors);
-
-  const todos = useQuery(api.todo.getTodos);
-  const totalTodos = todos ? todos.length : 0;
-  const completedTodos = todos ? todos.filter((todo) => todo.isCompleted).length : 0;
+  const totalTodos = todos.length;
+  const completedTodos = todos.filter((todo) => todo.isCompleted).length;
   const activeTodos = totalTodos - completedTodos;
 
   return (

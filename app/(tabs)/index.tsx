@@ -3,48 +3,53 @@ import EmptyState from "@/components/EmptyState";
 import Header from "@/components/Header";
 import LoadingSpinner from "@/components/LoadingSpinner";
 import TodoInput from "@/components/TodoInput";
-import { api } from "@/convex/_generated/api";
-import { Doc, Id } from "@/convex/_generated/dataModel";
 import useTheme from "@/hooks/useTheme";
+import { useTodos } from "@/todoStore";
+import type { TodoId, TodoItem } from "@/todoStore";
 import { Ionicons } from "@expo/vector-icons";
-import { useMutation, useQuery } from "convex/react";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import { Alert, FlatList, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type Todo = Doc<"todos">;
+type Todo = TodoItem;
 
 export default function Index() {
   const { colors } = useTheme();
 
-  const [editingId, setEditingId] = useState<Id<"todos"> | null>(null);
+  const [editingId, setEditingId] = useState<TodoId | null>(null);
   const [editText, setEditText] = useState("");
 
   const homeStyles = createHomeStyles(colors);
 
-  const todos = useQuery(api.todo.getTodos);
-  const toggleTodo = useMutation(api.todo.toggleTodo);
-  const deleteTodo = useMutation(api.todo.deleteTodo);
-  const updateTodo = useMutation(api.todo.updateTodo);
-
-  const isLoading = todos === undefined;
+  const { todos, isLoading, toggleTodo, deleteTodo, updateTodo } = useTodos();
 
   if (isLoading) return <LoadingSpinner />;
 
-  const handleToggleTodo = async (id: Id<"todos">) => {
+  const handleToggleTodo = async (id: TodoId) => {
     try {
-      await toggleTodo({ id });
+      await toggleTodo(id);
     } catch (error) {
       console.log("Error toggling todo", error);
       Alert.alert("Error", "Failed to toggle todo");
     }
   };
 
-  const handleDeleteTodo = async (id: Id<"todos">) => {
+  const handleDeleteTodo = async (id: TodoId) => {
     Alert.alert("Delete Todo", "Are you sure you want to delete this todo?", [
       { text: "Cancel", style: "cancel" },
-      { text: "Delete", style: "destructive", onPress: () => deleteTodo({ id }) },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteTodo(id);
+          } catch (error) {
+            console.log("Error deleting todo", error);
+            Alert.alert("Error", "Failed to delete todo");
+          }
+        },
+      },
     ]);
   };
 
@@ -55,8 +60,13 @@ export default function Index() {
 
   const handleSaveEdit = async () => {
     if (editingId) {
+      const nextText = editText.trim();
+      if (!nextText) {
+        Alert.alert("Error", "Todo text cannot be empty");
+        return;
+      }
       try {
-        await updateTodo({ id: editingId, text: editText.trim() });
+        await updateTodo(editingId, nextText);
         setEditingId(null);
         setEditText("");
       } catch (error) {
@@ -169,7 +179,7 @@ export default function Index() {
         <FlatList
           data={todos}
           renderItem={renderTodoItem}
-          keyExtractor={(item) => item._id}
+          keyExtractor={(item) => String(item._id)}
           style={homeStyles.todoList}
           contentContainerStyle={homeStyles.todoListContent}
           ListEmptyComponent={<EmptyState />}
